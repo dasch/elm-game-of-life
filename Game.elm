@@ -22,6 +22,13 @@ evolve world =
     Set.union (survivingCells world) (spawnedCells world)
 
 
+toggleCell : World -> Cell -> World
+toggleCell world cell =
+  if cell `Set.member` world
+    then Set.remove cell world
+    else Set.insert cell world
+
+
 insertPattern pattern (dx, dy) world =
     let
         move (x, y) = (x + dx, y + dy)
