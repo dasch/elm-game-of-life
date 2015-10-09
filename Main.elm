@@ -68,8 +68,13 @@ clicks =
         |> Signal.map2 adjust Window.dimensions
 
 
-spacePresses : Signal Bool
-spacePresses = Signal.filter identity False Keyboard.space
+spacePresses : Signal ()
+spacePresses =
+  -- `Keyboard.space` is a signal of Bool, where the value indicates whether the
+  -- space key is pressed. We only want to fire when that value is true, so we
+  -- filter out all False values.
+  Signal.filter identity False Keyboard.space
+    |> Signal.map (always ()) -- Drop the actual value, it's not interesting.
 
 
 actions : Signal Action
