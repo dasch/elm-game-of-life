@@ -15,7 +15,7 @@ import Game
 updateInterval = (200 * millisecond)
 
 
-type Action = Evolve | Click (Int, Int) | Resize (Int, Int) | ToggleState
+type Action = Tick | Click (Int, Int) | Resize (Int, Int) | ToggleState
 type State = Running | Paused
 
 
@@ -43,7 +43,7 @@ actions : Signal Action
 actions =
   Signal.mergeMany
     [ Signal.map Click clicks
-    , Signal.map (always Evolve) clock
+    , Signal.map (always Tick) clock
     , Signal.map Resize Window.dimensions
     , Signal.map (always ToggleState) spacePresses
     ]
@@ -68,7 +68,7 @@ initialModel =
 
 update action model =
   case action of
-    Evolve -> tick model
+    Tick -> tick model
     Click pos -> click pos model
     Resize (w, h) -> { model | boardWidth <- w, boardHeight <- h }
     ToggleState -> { model | state <- toggleState model.state }
