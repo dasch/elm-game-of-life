@@ -16,12 +16,11 @@ updateInterval = (200 * millisecond)
 
 
 type Action = Tick | Click (Int, Int) | Resize (Int, Int) | ToggleState
-type State = Running | Paused
 
 
 type alias Model =
   { world : Game.World
-  , state : State
+  , running : Bool
   , boardWidth : Int
   , boardHeight : Int
   }
@@ -60,7 +59,7 @@ main = Signal.map view model
 initialModel : Model
 initialModel =
     { world = Game.initialWorld
-    , state = Paused
+    , running = False
     , boardWidth = 100
     , boardHeight = 100
     }
@@ -71,22 +70,18 @@ update action model =
     Tick -> tick model
     Click pos -> click pos model
     Resize (w, h) -> { model | boardWidth <- w, boardHeight <- h }
-    ToggleState -> { model | state <- toggleState model.state }
+    ToggleState -> { model | running <- not model.running }
 
 
 tick model =
   let
-      world = case model.state of
-        Running -> Game.evolve model.world
-        Paused -> model.world
+      world =
+        if model.running
+          then Game.evolve model.world
+          else model.world
   in
     { model | world <- world }
 
-
-toggleState state =
-  case state of
-    Running -> Paused
-    Paused -> Running
 
 
 click (x, y) model =
