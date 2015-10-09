@@ -94,7 +94,7 @@ main = Signal.map2 view Window.dimensions model
 
 renderCell (x, y) =
   let
-      piece = filled Color.black (rect pieceSize pieceSize)
+      piece = filled Color.black (square pieceSize)
       x' = toFloat (x * pieceSize)
       y' = toFloat (y * pieceSize)
   in
