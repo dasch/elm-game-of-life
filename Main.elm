@@ -1,13 +1,10 @@
-import Html exposing (..)
-import Html.Attributes exposing (..)
-import Graphics.Collage exposing (..)
-import Graphics.Element exposing (..)
+import Graphics.Collage as Collage
 import Mouse
 import Keyboard
 import Window
 import Color
 import Set
-import Time exposing (..)
+import Time exposing (every, millisecond)
 
 import Game
 
@@ -81,7 +78,7 @@ actions : Signal Action
 actions =
   Signal.mergeMany
     [ Signal.map Click clicks
-    , Signal.map (always Tick) (Time.every updateInterval)
+    , Signal.map (always Tick) (every updateInterval)
     , Signal.map (always ToggleState) spacePresses
     ]
 
@@ -94,16 +91,16 @@ main = Signal.map2 view Window.dimensions model
 
 renderCell (x, y) =
   let
-      piece = filled Color.black (square pieceSize)
+      piece = Collage.filled Color.black (Collage.square pieceSize)
       x' = toFloat (x * pieceSize)
       y' = toFloat (y * pieceSize)
   in
     piece
-      |> move (x', y')
+      |> Collage.move (x', y')
 
 
 view (w, h) model =
   let
       cellViews = List.map renderCell (Set.toList model.world)
   in
-      collage w h cellViews
+      Collage.collage w h cellViews
