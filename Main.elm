@@ -15,14 +15,12 @@ import Game
 updateInterval = (200 * millisecond)
 
 
-type Action = Tick | Click (Int, Int) | Resize (Int, Int) | ToggleState
+type Action = Tick | Click (Int, Int) | ToggleState
 
 
 type alias Model =
   { world : Game.World
   , running : Bool
-  , boardWidth : Int
-  , boardHeight : Int
   }
 
 
@@ -31,7 +29,17 @@ clock = Time.every updateInterval
 
 
 clicks : Signal (Int, Int)
-clicks = Signal.sampleOn Mouse.clicks Mouse.position
+clicks =
+  let
+      adjust (w, h) (x, y) =
+        let
+            x' = x - w // 2
+            y' = 0 - y + h // 2
+        in
+            (x' // pieceSize, y' // pieceSize)
+  in
+    Signal.sampleOn Mouse.clicks Mouse.position
+      |> Signal.map2 adjust Window.dimensions
 
 
 spacePresses : Signal Bool
@@ -43,7 +51,6 @@ actions =
   Signal.mergeMany
     [ Signal.map Click clicks
     , Signal.map (always Tick) clock
-    , Signal.map Resize Window.dimensions
     , Signal.map (always ToggleState) spacePresses
     ]
 
@@ -53,15 +60,13 @@ model =
   Signal.foldp update initialModel actions
 
 
-main = Signal.map view model
+main = Signal.map2 view Window.dimensions model
 
 
 initialModel : Model
 initialModel =
     { world = Game.initialWorld
     , running = False
-    , boardWidth = 100
-    , boardHeight = 100
     }
 
 
@@ -69,7 +74,6 @@ update action model =
   case action of
     Tick -> tick model
     Click pos -> click pos model
-    Resize (w, h) -> { model | boardWidth <- w, boardHeight <- h }
     ToggleState -> { model | running <- not model.running }
 
 
@@ -85,16 +89,7 @@ tick model =
 
 
 click (x, y) model =
-  let
-      dx = model.boardWidth // 2
-      dy = model.boardHeight // 2
-      offset = pieceSize // 2
-      x' = x - dx + offset
-      y' = 0 - (y - dy) + offset
-      cell = (x' // pieceSize, y' // pieceSize)
-      world = Game.toggleCell model.world cell
-  in
-      { model | world <- world }
+  { model | world <- Game.toggleCell model.world (x, y) }
 
 
 pieceSize = 10
@@ -110,8 +105,8 @@ renderCell (x, y) =
       |> move (x', y')
 
 
-view model =
+view (w, h) model =
   let
       cellViews = List.map renderCell (Set.toList model.world)
   in
-      collage model.boardWidth model.boardHeight cellViews
+      collage w h cellViews
