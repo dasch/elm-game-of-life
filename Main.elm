@@ -88,7 +88,10 @@ click (x, y) model =
   let
       dx = model.boardWidth // 2
       dy = model.boardHeight // 2
-      cell = ((x - dx) // pieceSize, 0 - (y - dy) // pieceSize)
+      offset = pieceSize // 2
+      x' = x - dx + offset
+      y' = 0 - (y - dy) + offset
+      cell = (x' // pieceSize, y' // pieceSize)
       world = Game.toggleCell model.world cell
   in
       { model | world <- world }
@@ -97,13 +100,11 @@ click (x, y) model =
 pieceSize = 10
 
 
-piece = filled Color.black (rect pieceSize pieceSize)
-
-
 renderCell (x, y) =
   let
-      x' = toFloat (x * pieceSize - pieceSize // 2)
-      y' = toFloat (y * pieceSize + pieceSize // 2)
+      piece = filled Color.black (rect pieceSize pieceSize)
+      x' = toFloat (x * pieceSize)
+      y' = toFloat (y * pieceSize)
   in
     piece
       |> move (x', y')
