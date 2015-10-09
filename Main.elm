@@ -12,20 +12,44 @@ import Time exposing (..)
 import Game
 
 
+-- The width and height of each piece on the board:
+pieceSize = 10
+
+
+-- Model:
+
+
+type alias Model = { world : Game.World, running : Bool }
+
+
+initialModel : Model
+initialModel = { world = Game.initialWorld, running = False }
+
+
+model : Signal Model
+model =
+  Signal.foldp update initialModel actions
+
+
+update action model =
+  case action of
+    Tick ->
+      { model | world <- if model.running then Game.evolve model.world else model.world }
+
+    Click (x, y) ->
+      { model | world <- Game.toggleCell model.world (x, y) }
+
+    ToggleState ->
+      { model | running <- not model.running }
+
+
+-- Actions:
+
+
 updateInterval = (200 * millisecond)
 
 
 type Action = Tick | Click (Int, Int) | ToggleState
-
-
-type alias Model =
-  { world : Game.World
-  , running : Bool
-  }
-
-
-clock : Signal Time
-clock = Time.every updateInterval
 
 
 clicks : Signal (Int, Int)
@@ -38,61 +62,29 @@ clicks =
         in
             (x' // pieceSize, y' // pieceSize)
   in
-    Signal.sampleOn Mouse.clicks Mouse.position
-      |> Signal.map2 adjust Window.dimensions
+      -- Sample the mouse position on each click, then adjust the coordinates
+      -- to match the game coordinate system.
+      Signal.sampleOn Mouse.clicks Mouse.position
+        |> Signal.map2 adjust Window.dimensions
 
 
 spacePresses : Signal Bool
-spacePresses = Signal.filter (\x -> x) False Keyboard.space
+spacePresses = Signal.filter identity False Keyboard.space
 
 
 actions : Signal Action
 actions =
   Signal.mergeMany
     [ Signal.map Click clicks
-    , Signal.map (always Tick) clock
+    , Signal.map (always Tick) (Time.every updateInterval)
     , Signal.map (always ToggleState) spacePresses
     ]
 
 
-model : Signal Model
-model =
-  Signal.foldp update initialModel actions
+-- Rendering:
 
 
 main = Signal.map2 view Window.dimensions model
-
-
-initialModel : Model
-initialModel =
-    { world = Game.initialWorld
-    , running = False
-    }
-
-
-update action model =
-  case action of
-    Tick -> tick model
-    Click pos -> click pos model
-    ToggleState -> { model | running <- not model.running }
-
-
-tick model =
-  let
-      world =
-        if model.running
-          then Game.evolve model.world
-          else model.world
-  in
-    { model | world <- world }
-
-
-
-click (x, y) model =
-  { model | world <- Game.toggleCell model.world (x, y) }
-
-
-pieceSize = 10
 
 
 renderCell (x, y) =
