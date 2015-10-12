@@ -16,11 +16,11 @@ pieceSize = 10
 -- Model:
 
 
-type alias Model = { world : Game.World, running : Bool }
+type alias Model = { world : Game.World, running : Bool, cursor : (Int, Int) }
 
 
 initialModel : Model
-initialModel = { world = Game.initialWorld, running = False }
+initialModel = { world = Game.initialWorld, running = False, cursor = (0, 0) }
 
 
 model : Signal Model
@@ -39,6 +39,9 @@ update action model =
     ToggleState ->
       { model | running <- not model.running }
 
+    MoveCursor (x, y) ->
+      { model | cursor <- (x, y) }
+
 
 -- Actions:
 
@@ -46,23 +49,23 @@ update action model =
 updateInterval = (200 * millisecond)
 
 
-type Action = Tick | Click (Int, Int) | ToggleState
+type Action = Tick | Click (Int, Int) | ToggleState | MoveCursor (Int, Int)
+
+
+adjustMouseCoordinates (w, h) (x, y) = 
+  let
+      x' = x - w // 2
+      y' = 0 - y + h // 2
+  in
+      (x' // pieceSize, y' // pieceSize)
 
 
 clicks : Signal (Int, Int)
 clicks =
-  let
-      adjust (w, h) (x, y) =
-        let
-            x' = x - w // 2
-            y' = 0 - y + h // 2
-        in
-            (x' // pieceSize, y' // pieceSize)
-  in
-      -- Sample the mouse position on each click, then adjust the coordinates
-      -- to match the game coordinate system.
-      Signal.sampleOn Mouse.clicks Mouse.position
-        |> Signal.map2 adjust Window.dimensions
+    -- Sample the mouse position on each click, then adjust the coordinates
+    -- to match the game coordinate system.
+    Signal.sampleOn Mouse.clicks Mouse.position
+      |> Signal.map2 adjustMouseCoordinates Window.dimensions
 
 
 spacePresses : Signal ()
@@ -74,12 +77,18 @@ spacePresses =
     |> Signal.map (always ()) -- Drop the actual value, it's not interesting.
 
 
+cursorPosition : Signal (Int, Int)
+cursorPosition =
+  Signal.map2 adjustMouseCoordinates Window.dimensions Mouse.position
+
+
 actions : Signal Action
 actions =
   Signal.mergeMany
     [ Signal.map Click clicks
     , Signal.map (always Tick) (every updateInterval)
     , Signal.map (always ToggleState) spacePresses
+    , Signal.map MoveCursor cursorPosition
     ]
 
 
@@ -99,8 +108,20 @@ renderCell (x, y) =
       |> Collage.move (x', y')
 
 
+renderCursor (x, y) =
+  let
+      cursor = Collage.filled Color.blue (Collage.square pieceSize)
+      x' = toFloat (x * pieceSize)
+      y' = toFloat (y * pieceSize)
+  in
+    cursor
+      |> Collage.move (x', y')
+
+
+
 view (w, h) model =
   let
       cellViews = List.map renderCell (Set.toList model.world)
+      cursor = renderCursor model.cursor
   in
-      Collage.collage w h cellViews
+      Collage.collage w h (cellViews ++ [cursor])
