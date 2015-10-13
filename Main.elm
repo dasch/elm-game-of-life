@@ -1,11 +1,13 @@
 import Graphics.Collage as Collage
+import Graphics.Element exposing (layers, show, container, topRight, leftAligned)
+import Text
 import Mouse
 import Keyboard
 import Window
 import Color
-import Html exposing (div)
+import Html exposing (Html, div)
 import Html.Attributes exposing (style)
-import Time exposing (every, millisecond)
+import Time exposing (Time, every, millisecond)
 
 import Game
 
@@ -17,11 +19,21 @@ pieceSize = 10
 -- Model:
 
 
-type alias Model = { world : Game.World, running : Bool, cursor : (Int, Int) }
+type alias Model =
+  { world : Game.World
+  , running : Bool
+  , generation : Int
+  , cursor : (Int, Int)
+  }
 
 
 initialModel : Model
-initialModel = { world = Game.initialWorld, running = False, cursor = (0, 0) }
+initialModel =
+    { world = Game.initialWorld
+    , running = False
+    , generation = 0
+    , cursor = (0, 0)
+    }
 
 
 model : Signal Model
@@ -32,7 +44,10 @@ model =
 update action model =
   case action of
     Tick ->
-      { model | world <- if model.running then Game.evolve model.world else model.world }
+      if model.running then
+        { model | world <- Game.evolve model.world , generation <- model.generation + 1 }
+      else
+        model
 
     Click (x, y) ->
       { model | world <- Game.toggleCell model.world (x, y) }
@@ -120,12 +135,25 @@ renderCursor (x, y) =
 
 
 
+view : (Int, Int) -> Model -> Html
 view (w, h) model =
   let
       cellViews = List.map renderCell (Game.cells model.world)
+
       cursor = renderCursor model.cursor
+
       collage = Collage.collage w h (cellViews ++ [cursor])
+
+      info =
+          "Generation: " ++ toString model.generation
+            |> Text.fromString
+            |> leftAligned
+
+      screen = layers
+        [ collage
+        , container w h topRight <| info
+        ]
   in
       div [ style [ ("cursor", "none") ] ]
-        [ Html.fromElement collage
+        [ Html.fromElement screen
         ]
