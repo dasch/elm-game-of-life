@@ -3,6 +3,8 @@ import Mouse
 import Keyboard
 import Window
 import Color
+import Html exposing (div)
+import Html.Attributes exposing (style)
 import Set
 import Time exposing (every, millisecond)
 
@@ -123,5 +125,8 @@ view (w, h) model =
   let
       cellViews = List.map renderCell (Set.toList model.world)
       cursor = renderCursor model.cursor
+      collage = Collage.collage w h (cellViews ++ [cursor])
   in
-      Collage.collage w h (cellViews ++ [cursor])
+      div [ style [ ("cursor", "none") ] ]
+        [ Html.fromElement collage
+        ]
