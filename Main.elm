@@ -138,11 +138,14 @@ renderCursor (x, y) =
 view : (Int, Int) -> Model -> Html
 view (w, h) model =
   let
-      cellViews = List.map renderCell (Game.cells model.world)
+      cellViews =
+        Game.cells model.world
+          |> List.map renderCell
+          |> Collage.group
 
       cursor = renderCursor model.cursor
 
-      collage = Collage.collage w h (cellViews ++ [cursor])
+      collage = Collage.collage w h [cellViews, cursor]
 
       info =
           "Generation: " ++ toString model.generation
