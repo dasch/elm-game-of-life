@@ -54,28 +54,28 @@ spawnedCells world =
           neighborCount world cell == 3
 
       candidates =
-        List.map neighbors (Set.toList world)
-          |> List.foldl Set.union Set.empty
+        Set.toList world
+          |> List.concatMap neighbors
+          |> Set.fromList
   in
       Set.filter canSpawn candidates
 
 
 neighborCount world cell =
     let
-        neighborCells = Set.intersect (neighbors cell) world
+        neighborCells = Set.intersect (Set.fromList <| neighbors cell) world
     in
         List.length (Set.toList neighborCells)
 
-neighbors : Cell -> Set.Set Cell
+neighbors : Cell -> List Cell
 neighbors (x, y) =
-    Set.fromList
-        [ (x - 1, y - 1)
-        , (x - 1, y)
-        , (x - 1, y + 1)
-        , (x, y - 1)
-        , (x, y + 1)
-        , (x + 1, y - 1)
-        , (x + 1, y)
-        , (x + 1, y + 1)
-        ]
+  [ (x - 1, y - 1)
+  , (x - 1, y)
+  , (x - 1, y + 1)
+  , (x, y - 1)
+  , (x, y + 1)
+  , (x + 1, y - 1)
+  , (x + 1, y)
+  , (x + 1, y + 1)
+  ]
 
