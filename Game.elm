@@ -1,4 +1,4 @@
-module Game where
+module Game (World, initialWorld, evolve, toggleCell, cells) where
 
 import Set
 import Patterns
@@ -20,6 +20,10 @@ initialWorld =
 evolve : World -> World
 evolve world =
     Set.union (survivingCells world) (spawnedCells world)
+
+
+cells : World -> List Cell
+cells = Set.toList
 
 
 toggleCell : World -> Cell -> World

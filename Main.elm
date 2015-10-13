@@ -5,7 +5,6 @@ import Window
 import Color
 import Html exposing (div)
 import Html.Attributes exposing (style)
-import Set
 import Time exposing (every, millisecond)
 
 import Game
@@ -123,7 +122,7 @@ renderCursor (x, y) =
 
 view (w, h) model =
   let
-      cellViews = List.map renderCell (Set.toList model.world)
+      cellViews = List.map renderCell (Game.cells model.world)
       cursor = renderCursor model.cursor
       collage = Collage.collage w h (cellViews ++ [cursor])
   in
