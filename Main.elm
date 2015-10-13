@@ -116,12 +116,10 @@ main = Signal.map2 view Window.dimensions model
 
 renderCell (x, y) =
   let
-      piece = Collage.filled Color.black (Collage.square pieceSize)
-      x' = toFloat (x * pieceSize)
-      y' = toFloat (y * pieceSize)
+      piece = Collage.filled Color.black (Collage.square 1)
   in
     piece
-      |> Collage.move (x', y')
+      |> Collage.move (toFloat x, toFloat y)
 
 
 renderCursor (x, y) =
@@ -142,6 +140,7 @@ view (w, h) model =
         Game.cells model.world
           |> List.map renderCell
           |> Collage.group
+          |> Collage.scale (toFloat pieceSize)
 
       cursor = renderCursor model.cursor
 
